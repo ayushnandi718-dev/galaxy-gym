@@ -1,98 +1,246 @@
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import React, { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 
-function GoldMat() {
-  return <meshPhysicalMaterial color="#C9A84C" metalness={0.99} roughness={0.02} reflectivity={1} clearcoat={1} envMapIntensity={3} />
+function GoldMaterial() {
+  return (
+    <meshPhysicalMaterial
+      color="#D4A843"
+      metalness={1}
+      roughness={0.05}
+      clearcoat={1}
+      clearcoatRoughness={0.05}
+      envMapIntensity={4}
+    />
+  );
+}
+
+function GlassMaterial() {
+  return (
+    <meshPhysicalMaterial
+      color="#88ccff"
+      transmission={0.85}
+      roughness={0}
+      thickness={0.5}
+      transparent
+      envMapIntensity={5}
+    />
+  );
+}
+
+function ScreenMaterial() {
+  return (
+    <meshPhysicalMaterial
+      color="#00FF99"
+      emissive="#00FF99"
+      emissiveIntensity={1.2}
+      roughness={0}
+      metalness={0}
+    />
+  );
+}
+
+function Ring({ scale }) {
+  return (
+    <mesh scale={scale}>
+      <torusGeometry args={[0.55, 0.015, 16, 64]} />
+      <meshPhysicalMaterial
+        color="#00E5FF"
+        emissive="#00E5FF"
+        emissiveIntensity={1}
+        transparent
+        opacity={0.8}
+      />
+    </mesh>
+  );
 }
 
 export default function PhoneLocationModel() {
-  const groupRef = useRef()
-  const pinRef = useRef()
-  const ring1Ref = useRef()
-  const ring2Ref = useRef()
-  const ring3Ref = useRef()
+  const groupRef = useRef();
+
+  const ring1 = useRef();
+  const ring2 = useRef();
+  const ring3 = useRef();
+
+  const pinRef = useRef();
+
+  const particles = useRef([]);
 
   useFrame((state) => {
-    if (!groupRef.current) return
-    const t = state.clock.getElapsedTime()
-    groupRef.current.rotation.y = t * 0.35
-    groupRef.current.position.y = Math.sin(t * 0.6) * 0.1
+    const t = state.clock.getElapsedTime();
 
-    // Pin bounce
-    if (pinRef.current) pinRef.current.position.y = 0.9 + Math.abs(Math.sin(t * 1.2)) * 0.18
+    if (groupRef.current) {
+      groupRef.current.rotation.y = t * 0.35;
+      groupRef.current.position.y = Math.sin(t * 1.2) * 0.12;
+      groupRef.current.rotation.z = Math.sin(t * 0.6) * 0.03;
+    }
 
-    // Expanding rings (radar effect)
-    ;[ring1Ref, ring2Ref, ring3Ref].forEach((r, i) => {
-      if (!r.current) return
-      const phase = (t * 1.2 + i * 1.2) % 3.6
-      const scale = 0.3 + phase * 0.35
-      const opacity = Math.max(0, 1 - phase / 3.6)
-      r.current.scale.setScalar(scale)
-      r.current.material.opacity = opacity * 0.6
-    })
-  })
+    if (pinRef.current) {
+      pinRef.current.position.y = 1.25 + Math.sin(t * 2) * 0.08;
+    }
+
+    if (ring1.current) {
+      const s = 1 + Math.sin(t * 2) * 0.08;
+      ring1.current.scale.setScalar(s);
+    }
+
+    if (ring2.current) {
+      const s = 1.4 + Math.sin(t * 2 + 1) * 0.1;
+      ring2.current.scale.setScalar(s);
+    }
+
+    if (ring3.current) {
+      const s = 1.8 + Math.sin(t * 2 + 2) * 0.12;
+      ring3.current.scale.setScalar(s);
+    }
+
+    particles.current.forEach((particle, i) => {
+      if (!particle) return;
+
+      const angle = t * 0.8 + i * 0.7;
+      const radius = 1.2 + Math.sin(t + i) * 0.1;
+
+      particle.position.x = Math.cos(angle) * radius;
+      particle.position.z = Math.sin(angle) * radius;
+      particle.position.y =
+        0.4 + Math.sin(t * 2 + i) * 0.25;
+    });
+  });
 
   return (
-    <group ref={groupRef} scale={0.85}>
-      {/* Map base platform */}
-      <mesh castShadow position={[0, -0.85, 0]}>
-        <boxGeometry args={[2.0, 0.08, 1.5]} />
-        <meshPhysicalMaterial color="#0a1a0a" metalness={0.5} roughness={0.5} />
-      </mesh>
-      {/* Map border */}
-      <mesh position={[0, -0.81, 0]}>
-        <boxGeometry args={[2.06, 0.04, 1.56]} />
-        <GoldMat />
+    <group ref={groupRef} scale={0.9}>
+      {/* PHONE BODY */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[1.25, 2.45, 0.14]} />
+        <GoldMaterial />
       </mesh>
 
-      {/* Map grid lines */}
-      {[-0.5, 0, 0.5].map((x, i) => (
-        <mesh key={`v${i}`} position={[x, -0.8, 0]}>
-          <boxGeometry args={[0.01, 0.02, 1.4]} />
-          <meshStandardMaterial color="#C9A84C" opacity={0.3} transparent />
-        </mesh>
-      ))}
-      {[-0.5, 0, 0.5].map((z, i) => (
-        <mesh key={`h${i}`} position={[0, -0.8, z]}>
-          <boxGeometry args={[1.9, 0.02, 0.01]} />
-          <meshStandardMaterial color="#C9A84C" opacity={0.3} transparent />
-        </mesh>
-      ))}
+      {/* BACK PANEL */}
+      <mesh position={[0, 0, -0.05]}>
+        <boxGeometry args={[1.1, 2.25, 0.03]} />
+        <meshPhysicalMaterial
+          color="#0f0f0f"
+          metalness={0.8}
+          roughness={0.15}
+        />
+      </mesh>
 
-      {/* Location pin body */}
-      <group ref={pinRef} position={[0, 0.9, 0]}>
-        {/* Pin teardrop - top sphere */}
-        <mesh castShadow position={[0, 0.35, 0]}>
-          <sphereGeometry args={[0.28, 24, 24]} />
-          <meshPhysicalMaterial color="#ff3333" metalness={0.3} roughness={0.2} emissive="#ff1111" emissiveIntensity={0.3} />
+      {/* SCREEN */}
+      <mesh position={[0, 0, 0.08]}>
+        <boxGeometry args={[1.05, 2.15, 0.02]} />
+        <ScreenMaterial />
+      </mesh>
+
+      {/* GLASS */}
+      <mesh position={[0, 0, 0.09]}>
+        <boxGeometry args={[1.05, 2.15, 0.01]} />
+        <GlassMaterial />
+      </mesh>
+
+      {/* CAMERA */}
+      <mesh position={[0, 0.92, 0.1]}>
+        <cylinderGeometry args={[0.08, 0.08, 0.03, 24]} />
+        <meshPhysicalMaterial
+          color="#111"
+          metalness={1}
+          roughness={0.2}
+        />
+      </mesh>
+
+      {/* GPS PIN */}
+      <group ref={pinRef} position={[0, 1.25, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.16, 24, 24]} />
+          <meshPhysicalMaterial
+            color="#FF3B3B"
+            emissive="#FF3B3B"
+            emissiveIntensity={1.8}
+          />
         </mesh>
-        {/* Pin hole */}
-        <mesh position={[0, 0.35, 0.22]}>
-          <sphereGeometry args={[0.1, 12, 12]} />
-          <meshStandardMaterial color="#111" />
+
+        <mesh position={[0, -0.22, 0]}>
+          <coneGeometry args={[0.08, 0.28, 16]} />
+          <meshPhysicalMaterial
+            color="#FF3B3B"
+            emissive="#FF3B3B"
+            emissiveIntensity={1.8}
+          />
         </mesh>
-        {/* Pin tail */}
-        <mesh castShadow position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.1, 0.55, 16]} />
-          <meshPhysicalMaterial color="#cc2222" metalness={0.4} roughness={0.3} />
-        </mesh>
-        {/* Gold ring on pin */}
-        <mesh position={[0, 0.35, 0]}>
-          <torusGeometry args={[0.3, 0.03, 10, 28]} />
-          <GoldMat />
-        </mesh>
-        <pointLight color="#ff3333" intensity={1.5} distance={2} position={[0, 0.35, 0]} />
       </group>
 
-      {/* Radar rings */}
-      {[ring1Ref, ring2Ref, ring3Ref].map((r, i) => (
-        <mesh key={i} ref={r} position={[0, -0.79, 0]} rotation={[-Math.PI/2, 0, 0]}>
-          <ringGeometry args={[0.5, 0.56, 40]} />
-          <meshStandardMaterial color="#C9A84C" transparent opacity={0.5} side={2} />
+      {/* SIGNAL RINGS */}
+      <group position={[0, 1.25, 0]}>
+        <group ref={ring1}>
+          <Ring scale={1} />
+        </group>
+
+        <group ref={ring2}>
+          <Ring scale={1.4} />
+        </group>
+
+        <group ref={ring3}>
+          <Ring scale={1.8} />
+        </group>
+      </group>
+
+      {/* SCREEN UI */}
+      <mesh position={[0, 0.45, 0.11]}>
+        <boxGeometry args={[0.55, 0.08, 0.01]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+
+      <mesh position={[0, 0.22, 0.11]}>
+        <boxGeometry args={[0.72, 0.05, 0.01]} />
+        <meshBasicMaterial color="#00ffaa" />
+      </mesh>
+
+      <mesh position={[0, 0.08, 0.11]}>
+        <boxGeometry args={[0.62, 0.04, 0.01]} />
+        <meshBasicMaterial color="#00ffaa" />
+      </mesh>
+
+      <mesh position={[0, -0.06, 0.11]}>
+        <boxGeometry args={[0.48, 0.04, 0.01]} />
+        <meshBasicMaterial color="#00ffaa" />
+      </mesh>
+
+      {/* FLOATING PARTICLES */}
+      {Array.from({ length: 12 }).map((_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => (particles.current[i] = el)}
+        >
+          <octahedronGeometry args={[0.04]} />
+          <meshPhysicalMaterial
+            color={i % 2 === 0 ? "#FFD700" : "#00E5FF"}
+            emissive={i % 2 === 0 ? "#FFD700" : "#00E5FF"}
+            emissiveIntensity={1.2}
+            roughness={0}
+            metalness={1}
+          />
         </mesh>
       ))}
 
-      <pointLight color="#C9A84C" intensity={2} distance={5} position={[0, 1, 0]} />
+      {/* LIGHTING */}
+      <pointLight
+        color="#FFD700"
+        intensity={2}
+        distance={6}
+        position={[0, 1.5, 1]}
+      />
+
+      <pointLight
+        color="#00E5FF"
+        intensity={2}
+        distance={5}
+        position={[0, 0.5, 1]}
+      />
+
+      <pointLight
+        color="#FF3B3B"
+        intensity={1.5}
+        distance={3}
+        position={[0, 1.5, 0]}
+      />
     </group>
-  )
+  );
 }
