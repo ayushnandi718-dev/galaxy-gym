@@ -16,7 +16,7 @@ export default function Section3DCanvas({
       <Canvas
         camera={{ position: cameraPosition, fov }}
         dpr={1}
-        frameloop="demand"
+        frameloop="always"
         gl={{
           antialias: false,
           alpha: true,
