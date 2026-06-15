@@ -21,16 +21,22 @@ export default function Section3DCanvas({
     >
       <Canvas
         camera={{ position: cameraPosition, fov }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        style={{ background: 'transparent' }}
+        dpr={1}
+        gl={{
+  antialias: false,
+  alpha: true,
+  powerPreference: 'high-performance'
+}}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.12} />
-          <directionalLight position={[5, 8, 3]} intensity={2.2} color="#ffffff" />
+          <ambientLight intensity={0.3} />
+<directionalLight
+  position={[5, 8, 3]}
+  intensity={1.5}
+/>
           <directionalLight position={[-4, -2, -4]} intensity={0.4} color="#C9A84C" />
           <spotLight position={[3, 5, 3]} angle={0.4} penumbra={0.8} intensity={3} color="#C9A84C" />
-          <Environment preset="city" />
+          <Environment preset="sunset" background={false} />
           <AdaptiveDpr pixelated />
           {children}
         </Suspense>
